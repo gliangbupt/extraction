@@ -1,11 +1,9 @@
 import os
 import re
 import xlrd
-import xlwt
-import numpy as np
 import xlsxwriter
 import datetime
-
+import gc
 
 def name_split(pathname):                         # 提取名称信息（包括光源和强度）
     symbol = "[ _-]"
@@ -44,113 +42,95 @@ def read_excel(pathname):
     light_level=float(namelist[2])
     # print(namelist)
     # 字典存储函数返回值
-    values = {'illuminant':name_str,'light_level':light_level,'contrast': contrast, 'Color_fidelity': Color_fid, 'L*22nd': L22, 'White_balance': White_blnc}
+    values = {'illuminant':name_str,'light_level':light_level,
+              'contrast': contrast, 'Color_fidelity': Color_fid,
+              'L*_22nd': L22, 'White_balance': White_blnc}
     return values
 
 
-def batch_procsess(path):
+def batch_process(path):
     parents = os.listdir(path)
-    D65 = []                                        # 初始化代表各个光源的列表，用来存储字典
-    TL84 = []
-    TL83 = []
-    A = []
-    H = []
-    F = []
-
+    list_data= []
     for i in range(0, len(parents)):
         pathname = path + parents[i]
-        # print(pathname)
-        name_str = name_split(pathname)             # name_str存储分割出来的文件名，例如F_A_5
         if ('.xls' or '.xlsx') in parents[i]:
-            if re.search('[_TL84_]', name_str):
-                # dic=read_excel(pathname)          #按固定顺序匹配
-                # TL84=TL84.append(dic)             #若是这样写则会修改obj本身并且返回None
-                TL84.append(read_excel(pathname))
-            if re.search('[_TL83_]', name_str):     # 另外此处不可以用elif,因为elif隐含条件是
-                TL83.append(read_excel(pathname))   # 当第一个if为假时才会向下判定elif
-            if re.search('[_D65_]', name_str):      # 然而若if为真则下面不进行判断，直接if下面的
-                D65.append(read_excel(pathname))    # 语句块进行处理
-            if re.search('[_A_]', name_str):
-                A.append(read_excel(pathname))
-            if re.search('[_H_]', name_str):
-                H.append(read_excel(pathname))
-            if re.search('[_F_]', name_str):
-                F.append(read_excel(pathname))
+            list_data.append(read_excel(pathname))
+    print(list_data)
+    list_mid = mid_extraction(list_data)
+    print(list_mid)
 
-    final_list = [D65, TL84, TL83, A, H, F]
-    # print(final_list)
-    return final_list
+    final_mid=list_mid
+    final_list=list_data
 
+    return final_list,final_mid
 
-def write_excel(list_data,path):
+def write_excel(list_data,list_mid):
     parents = os.listdir(path)
 
     today = datetime.datetime.now()
     time = today.strftime('%y%m%d%H%M')
     workbook = xlsxwriter.Workbook('output_' + time + '.xlsx')
     worksheet = workbook.add_worksheet()
-    # 确认数据的总长度，因为采用了‘二维列表’这样的奇葩数据结构来存储，
-    # 故总数据长度（即所有光源的所有数据）用以下方式求得（TMD后来发现不用这个气死爸爸了T.T）
-    # list_data_len=0
-    # for j in range(len(list_data)):
-    #     list_data_len+=len(list_data[j])
 
+    # 写入所有数据
     row=1
     col=20
-    light_name = [], l_1000 = [], l_300 = [], l_100 = [], l_5 = [], l_1 = [], l_0 = [], l_20=[]
-    light=[light_name,l_1000,l_300,l_100,l_20,l_5,l_1,l_0]
-
-    # lightname = ['D65','TL84','TL83','A','H','F']
-    # lightlevel = ['1000','300','100','20','5','0']
-    # finalname = {}
-    for i in range(len(list_data)):                  #写入数据
-        for j in range(len(list_data[i])):
-            item=list_data[i][j]                     #item现在是一个字典
-            worksheet.write(row,col,item['illuminant'])
-            worksheet.write(row+1,col,str('contrast'))
-            worksheet.write(row+1,col+1,item['contrast'])
-            worksheet.write(row+2,col,str('Color_fidelity'))
-            worksheet.write(row+2,col+1,item['Color_fidelity'])
-            worksheet.write(row +3 , col, str('L*22nd'))
-            worksheet.write(row + 3, col+1,item['L*22nd'] )
-            worksheet.write(row + 4, col, str('White_balance'))
-            worksheet.write(row + 4, col+1, item['White_balance'])
-            row += 5#这儿的坑太多了...卧槽加5才对呀，每个光源占5行...
-
-            if item['illuminant'] == 'D65':
-                if item['light_level']==1000:
-                    l_1000.append(item['contrast'])
-                if item['light_level']==300:
-                    l_300.append(item['contrast'])
-                if item['light_level']==100:
-                    l_100.append(item['contrast'])
-                if item['light_level']==20:
-                    l_20.append(item['contrast'])
-                if item['light_level']==5:
-                    l_300.append(item['contrast'])
-            if item['illuminant'] == 'TL84':
-            if item['illuminant'] == 'TL83':
-            if item['illuminant'] == 'A':
-            if item['illuminant'] == 'H':
-            if item['illuminant'] == 'F':
-
+    for i in range(len(list_data)):
+        item=list_data[i]#item现在是一个字典
+        worksheet.write(row,col,item['illuminant'])
+        worksheet.write(row+1,col,str('contrast'))
+        worksheet.write(row+1,col+1,item['contrast'])
+        worksheet.write(row+2,col,str('Color_fidelity'))
+        worksheet.write(row+2,col+1,item['Color_fidelity'])
+        worksheet.write(row +3 , col, str('L*_22nd'))
+        worksheet.write(row + 3, col+1,item['L*_22nd'] )
+        worksheet.write(row + 4, col, str('White_balance'))
+        worksheet.write(row + 4, col+1, item['White_balance'])
+        row += 5                                      #这儿的坑太多了...卧槽加5才对呀，每个光源占5行...
+    #写入中间值数据
+    row_2=2
+    col_2=2
+    worksheet.write(row_2+1, col_2-1, str('Color_fidelity'))
+    worksheet.write(row_2+2, col_2-1, str('White_balance'))
+    worksheet.write(row_2 +3, col_2-1, str('L*22nd'))
+    worksheet.write(row_2 +4, col_2-1, str('contrast'))
+    for i in range(len(list_mid)):
+        item=list_mid[i]
+        worksheet.write(row_2,col_2,item['illuminant'])
+        worksheet.write(row_2 + 1,col_2,item['Color_fidelity'])
+        worksheet.write(row_2 + 2, col_2, item['White_balance'])
+        worksheet.write(row_2 + 3, col_2 , item['L*_22nd'])
+        worksheet.write(row_2 + 4, col_2, item['contrast'])
+        col_2+=1
     workbook.close()
 
-# def mid_writing(listdata,path):
-#     for n in range(0, len(parents)):
-#         pathname = path + parents[n]
-#         # print(pathname)
-#         name_str = name_split(pathname)
-#
-#         if re.search('_D65_', name_str):
-#             if item['light_level']
-#                 D65_cf.append(item['Color_fidelity'])
-#         if re.search('[_TL83_]', name_str):
-#             TL83_cf.append(item['Color_fidelity'])
 
+def mid(list_compare):                                #返回中间值，list_compare存的是相同照度的含字典列表
+    sort_key =lambda x:x['Color_fidelity']            #排序因子是色温（？）
+    list_sort=sorted(list_compare,key=sort_key)
+    list_mid= list_sort[int((len(list_sort))/2)]
 
+    return list_mid
 
-
+def mid_extraction(Lightlist):                        #生成指定光源含各个照度中间值的字典的列表（我说了个啥...）
+    Lightlist_compare = []
+    Lightlist_final = []
+    i=0
+    j=1
+                                                      # 分别设置i和j两个游标，j比i大1
+    while i<len(Lightlist) and j<len(Lightlist):
+        if j == len(Lightlist) - 1:
+            Lightlist_compare.append(Lightlist[j])
+        if Lightlist[i]['illuminant'] == Lightlist[j]['illuminant']:
+            Lightlist_compare.append(Lightlist[i])
+        else:
+            Lightlist_compare.append(Lightlist[i])
+            Lightlist_final.append(mid(Lightlist_compare))
+            Lightlist_compare = []
+        i += 1
+        j += 1
+    print(Lightlist_final)
+    return Lightlist_final
 
 
 
@@ -161,4 +141,6 @@ def write_excel(list_data,path):
 
 
 path = 'D:\My document\work\Execl提取数据\Data_extraction\sample\\'
-write_excel(batch_procsess(path))
+a,b=batch_process(path)
+write_excel(a,b)
+
