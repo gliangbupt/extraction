@@ -70,6 +70,8 @@ def write_excel(list_data,list_mid):
     workbook = xlsxwriter.Workbook('ColorFidelity_output_' + time + '.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column('A:Z',10)# 更改列宽为10
+    format1=workbook.add_format({'num_format':'0.00'})
+
     # 写入所有数据
     row=1
     col=17
@@ -77,13 +79,13 @@ def write_excel(list_data,list_mid):
         item=list_data[i]#item现在是一个字典
         worksheet.write(row,col,item['illuminant'])
         worksheet.write(row+1,col,str('contrast'))
-        worksheet.write(row+1,col+1,item['contrast'])
+        worksheet.write(row+1,col+1,item['contrast'],format1)
         worksheet.write(row+2,col,str('Color_fidelity'))
-        worksheet.write(row+2,col+1,item['Color_fidelity'])
+        worksheet.write(row+2,col+1,item['Color_fidelity'],format1)
         worksheet.write(row +3 , col, str('L*_22nd'))
-        worksheet.write(row + 3, col+1,item['L*_22nd'] )
+        worksheet.write(row + 3, col+1,item['L*_22nd'],format1 )
         worksheet.write(row + 4, col, str('White_balance'))
-        worksheet.write(row + 4, col+1, item['White_balance'])
+        worksheet.write(row + 4, col+1, item['White_balance'],format1)
         row += 5                                      #这儿的坑太多了...卧槽加5才对呀，每个光源占5行...
     #写入中间值数据
     row_2=2
@@ -95,10 +97,10 @@ def write_excel(list_data,list_mid):
     for i in range(len(list_mid)):
         item=list_mid[i]
         worksheet.write(row_2,col_2,item['illuminant'])
-        worksheet.write(row_2 + 1,col_2,item['Color_fidelity'])
-        worksheet.write(row_2 + 2, col_2, item['White_balance'])
-        worksheet.write(row_2 + 3, col_2 , item['L*_22nd'])
-        worksheet.write(row_2 + 4, col_2, item['contrast'])
+        worksheet.write(row_2 + 1,col_2,item['Color_fidelity'],format1)
+        worksheet.write(row_2 + 2, col_2, item['White_balance'],format1)
+        worksheet.write(row_2 + 3, col_2 , item['L*_22nd'],format1)
+        worksheet.write(row_2 + 4, col_2, item['contrast'],format1)
         col_2+=1
     workbook.close()
 
