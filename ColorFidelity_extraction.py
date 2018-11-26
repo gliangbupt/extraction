@@ -54,7 +54,7 @@ def batch_process(path):
         if ('.xls' or '.xlsx') in parents[i]:
             list_data.append(read_excel(pathname))
 
-    list_mid = mid_extraction(list_data)
+    list_mid = compare_extraction(list_data)
 
 
     final_mid=list_mid
@@ -63,11 +63,11 @@ def batch_process(path):
     return final_list,final_mid
 
 def write_excel(list_data,list_mid):
-    parents = os.listdir(path)
+
 
     today = datetime.datetime.now()
     time = today.strftime('%y%m%d%H%M')
-    workbook = xlsxwriter.Workbook('output_' + time + '.xlsx')
+    workbook = xlsxwriter.Workbook('ColorFidelity_output_' + time + '.xlsx')
     worksheet = workbook.add_worksheet()
     worksheet.set_column('A:Z',10)# 更改列宽为10
     # 写入所有数据
@@ -110,7 +110,7 @@ def mid(list_compare):                                #返回中间值，list_co
 
     return list_mid
 
-def mid_extraction(Lightlist):                        #生成指定光源含各个照度中间值的字典的列表（我说了个啥...）
+def compare_extraction(Lightlist):                        #生成指定光源含各个照度中间值的字典的列表（我说了个啥...）
     Lightlist_compare = []
     Lightlist_final = []
     i=0
