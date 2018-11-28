@@ -68,16 +68,21 @@ def compare_extraction(Lightlist):  # 生成指定光源含各个照度需求值
     j = 1
     # 分别设置i和j两个游标，j比i大1
     while i < len(Lightlist) and j < len(Lightlist):
-        if j == len(Lightlist) - 1:
+        if j == len(Lightlist) - 1:  # 单独对最后几项处理，否则会丢失
+            Lightlist_compare.append(Lightlist[i])  # 这里是加上了倒数第二项
             Lightlist_compare.append(Lightlist[j])
+            Lightlist_final.append(max(Lightlist_compare))
+
         if Lightlist[i]['illuminant'] == Lightlist[j]['illuminant']:
             Lightlist_compare.append(Lightlist[i])
         else:
             Lightlist_compare.append(Lightlist[i])
+
             Lightlist_final.append(max(Lightlist_compare))
             Lightlist_compare = []
         i += 1
         j += 1
+
     return Lightlist_final
 
 def write_excel(list_data,list_ext):
@@ -122,3 +127,4 @@ def write_excel(list_data,list_ext):
 path = 'D:\My document\work\Execl提取数据\Data_extraction\\texture\\'
 a,b=batch_process(path)
 write_excel(a,b)
+
