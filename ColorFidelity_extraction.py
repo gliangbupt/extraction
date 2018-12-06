@@ -3,6 +3,8 @@ import re
 import xlrd
 import xlsxwriter
 import datetime
+
+
 def name_split(pathname):                         # 提取名称信息（包括光源和强度）
     symbol = "[ _-]"
 
@@ -54,11 +56,13 @@ def batch_process(path):
         if ('.xls' or '.xlsx') in parents[i]:
             list_data.append(read_excel(pathname))
 
-    list_mid = compare_extraction(list_data)
+    list_data=add_order(list_data)
+
+    list_ext = compare_extraction(list_data)
 
 
-    final_mid=list_mid
-    final_list=list_data
+    final_mid=sorted(list_ext,key=lambda x:x['order'])
+    final_list=sorted(list_data,key=lambda x:x['order'])
 
     return final_list,final_mid
 
@@ -137,15 +141,32 @@ def compare_extraction(Lightlist):  # 生成指定光源含各个照度需求值
 
     return Lightlist_final
 
+def add_order(list_ext):
+    for i in range(len(list_ext)):
+        item=list_ext[i]
+        s=item['illuminant'].split('_')
+        illu=s[1]
+        if illu == 'D65':
+            item.update({'order':1})
+        elif illu == 'TL84':
+            item.update({'order':2})
+        elif illu == 'TL83':
+            item.update({'order':3})
+        elif illu == 'A':
+                item.update({'order': 4})
+        elif illu == 'H':
+            item.update({'order':5})
+        elif illu == 'F':
+            item.update({'order':6})
+        elif illu == 'FA':
+            item.update({'order':7})
+
+    return list_ext
 
 
-
-
-
-
-
-
-path = 'D:\My document\work\Execl提取数据\Data_extraction\sample\\'
-a,b=batch_process(path)
-write_excel(a,b)
+if __name__ == '__main__':
+    print('选择路径')
+    path = 'D:\My document\work\Execl提取数据\Data_extraction\sample\\'
+    a,b=batch_process(path)
+    write_excel(a,b)
 

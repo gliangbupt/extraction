@@ -45,10 +45,12 @@ def batch_process(path):
         if ('.xls' or '.xlsx') in parents[i]:
             list_data.append(read_excel(pathname))
 
-    list_max = compare_extraction(list_data)
+    list_data = add_order(list_data)
 
-    final_max = list_max
-    final_list = list_data
+    list_ext = compare_extraction(list_data)
+
+    final_max = sorted(list_ext, key=lambda x: x['order'])
+    final_list = sorted(list_data, key=lambda x: x['order'])
 
     return final_list, final_max
 
@@ -123,8 +125,33 @@ def write_excel(list_data,list_ext):
         col_2+=1
     workbook.close()
 
+def add_order(list_ext):# 增加了键值对儿用来排序
+    for i in range(len(list_ext)):
+        item=list_ext[i]
+        s=item['illuminant'].split('_')
+        illu=s[1]
+        if illu == 'D65':
+            item.update({'order':1})
+        elif illu == 'TL84':
+            item.update({'order':2})
+        elif illu == 'TL83':
+            item.update({'order':3})
+        elif illu == 'A':
+                item.update({'order': 4})
+        elif illu == 'H':
+            item.update({'order':5})
+        elif illu == 'F':
+            item.update({'order':6})
+        elif illu == 'FA':
+            item.update({'order':7})
 
-path = 'D:\My document\work\Execl提取数据\Data_extraction\\texture\\'
-a,b=batch_process(path)
-write_excel(a,b)
+    return list_ext
+
+
+
+if __name__ == '__main__':
+    print('选择路径')
+    path = 'D:\My document\work\Execl提取数据\Data_extraction\\texture\\'
+    a, b = batch_process(path)
+    write_excel(a, b)
 
